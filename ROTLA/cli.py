@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """Console script for ROTLA."""
@@ -6,8 +7,8 @@ import click
 import os
 
 from ROTLA import ROTLA as _find_breakpoints
-from compile_breakpoint_results import compile_breakpoints as _compile_breakpoints
-from aligned_bases_from_psl import get_aligned_bases as _get_aligned_bases
+from .compile_breakpoint_results import compile_breakpoints as _compile_breakpoints
+from .aligned_bases_from_psl import get_aligned_bases as _get_aligned_bases
 
 @click.group()
 def main(args=None):
@@ -38,18 +39,19 @@ def find_breakpoints(read_1_fastq_file, read_2_fastq_file, reference_sequence,
     .read_2.blat.out    Content written to STDOUT during Read 2 blat alignment
     .breakpoints.txt    Tab-delimited table of breakpoint start, end, counts
     '''
-    args = { 'read_1_file_name':read_1_fastq_file,
-             'read_2_file_name':read_2_fastq_file,
-             'reference_sequence':reference_sequence,
-             'output_prefix':output_prefix,
-             'length':length }
+    args = {
+        'read_1_file_name': read_1_fastq_file,
+        'read_2_file_name': read_2_fastq_file,
+        'reference_sequence': reference_sequence,
+        'output_prefix': output_prefix,
+        'length': length
+    }
     _find_breakpoints(**args)
 
 @main.command()
 @click.argument('list_file_name', type=str)
 @click.argument('output_file_name', type=str)
 def compile_breakpoint_results(list_file_name, output_file_name):
-
     '''
     Combine results from multiple samples.
 
@@ -61,14 +63,12 @@ def compile_breakpoint_results(list_file_name, output_file_name):
     column 2 should specify the corresponding name to be written to
     the header line in the output file.
     '''
-
     _compile_breakpoints(list_file_name, output_file_name)
 
 @main.command()
 @click.argument('input_file_prefix', type=str)
 @click.argument('reference_sequence', type=str)
 def get_aligned_bases(input_file_prefix, reference_sequence):
-
     '''
     Count bases aligned by find_breakpoints.
 
@@ -80,7 +80,6 @@ def get_aligned_bases(input_file_prefix, reference_sequence):
     tab-delimited format where the first contains the input file prefix and
     the second contains the count itself.
     '''
-
     _get_aligned_bases(input_file_prefix, reference_sequence)
 
 if __name__ == "__main__":

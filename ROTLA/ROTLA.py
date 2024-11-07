@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import os
@@ -9,7 +9,7 @@ import re
 
 from subprocess import call
 from collections import defaultdict
-from __init__ import PATHS
+from .__init__ import PATHS
 
 class ROTLA(object):
     
@@ -51,18 +51,18 @@ class ROTLA(object):
                     header_count += 1
                 
                 if header_count > 1:
-                    raise StandardError('FASTA contains two headers.')
+                    raise Exception('FASTA contains two headers.')  # Changed StandardError to Exception
         
         return reference.upper()
 
     @staticmethod
     def flex_open(fq):
-        if re.search("\.fastq\.gz$", fq):
-            handle = gzip.open(fq)
-        elif re.search("\.fastq$", fq):
+        if re.search(r"\.fastq\.gz$", fq):  # Added r prefix for raw string
+            handle = gzip.open(fq, 'rt')  # Added text mode
+        elif re.search(r"\.fastq$", fq):  # Added r prefix for raw string
             handle = open(fq)
         else:
-            raise StandardError('Input read files must be in *.fastq or *.fastq.gz format.')
+            raise Exception('Input read files must be in *.fastq or *.fastq.gz format.')  # Changed StandardError
 
         return handle
 
@@ -96,7 +96,7 @@ class ROTLA(object):
             with open(input_file) as f:
                 
                 # Go through BLAT header
-                for i in range(5):
+                for _ in range(5):  # Changed i to _ since it's unused
                     next(f)
                     
                 # Iterate through lines
@@ -125,7 +125,6 @@ class ROTLA(object):
                         qStarts,
                         tStarts,
                     ] = line.strip().split()
-                    
                     qStarts = qStarts.split(",")[:-1]
                     tStarts = tStarts.split(",")[:-1]
                     blockSizes = blockSizes.split(",")[:-1]
@@ -202,7 +201,7 @@ class ROTLA(object):
                     if strand == '+':
                         sorted_alignments = sorted(alignment['mapped_regions'], key=lambda k: k['q'][0])
                     if strand == '-':
-                        sorted_alignments = sorted(alignment['mapped_regions'], key=lambda k: k['q'][0], reverse = True)
+                        sorted_alignments = sorted(alignment['mapped_regions'], key=lambda k: k['q'][0], reverse=True)
                         
                     for i in range(len(sorted_alignments)-1):
                         
@@ -266,10 +265,10 @@ class ROTLA(object):
                 repeat = False
                 aligned_breaklist = copy.copy(breaklist)
                 
-                for i, break_1 in enumerate(breaklist):
-                    for j, break_2 in enumerate(breaklist):
+                for break_1 in breaklist:
+                    for break_2 in breaklist:
                         if break_1 != break_2 and break_1[1] >= break_2[1] and break_1[2] <= break_2[2] and (break_1[1] != break_2[1] or break_1[2] != break_2[2]):
-                            aligned_breaklist[j] = [break_2[0], break_1[1], break_1[2]]
+                            aligned_breaklist[breaklist.index(break_2)] = [break_2[0], break_1[1], break_1[2]]
                             repeat = True
                 
                 breaklist = aligned_breaklist
@@ -294,7 +293,7 @@ class ROTLA(object):
                     if strand == '+':
                         sorted_regions = sorted(mapped_regions, key=lambda k: k['q'][0])
                     if strand == '-':
-                        sorted_regions = sorted(mapped_regions, key=lambda k: k['q'][0], reverse = True)
+                        sorted_regions = sorted(mapped_regions, key=lambda k: k['q'][0], reverse=True)
                     
                     t_range = [(sorted_regions[0]['t'][0], sorted_regions[-1]['t'][1])]
 
@@ -340,7 +339,6 @@ class ROTLA(object):
             self.breakpoints[query] = breakpoints
     
     def compileBreaks(self):
-        
         for query in self.breakpoints:
             break_set = set()
             
@@ -352,24 +350,23 @@ class ROTLA(object):
                 self.break_count[breakpoint] += 1
     
     def compareAcrossAllBreaks(self, ref_seq):
-        
         repeat = True
         while repeat:
             repeat = False
             
-            for break_1 in self.break_count.keys():
-                for break_2 in self.break_count.keys():
+            # Convert keys to list to avoid RuntimeError from modifying dict during iteration
+            break_keys = list(self.break_count.keys())
+            for break_1 in break_keys:
+                for break_2 in break_keys:
                     if break_1 != break_2 and break_1[0] < break_2[0] and break_1[1] > break_2[0] and break_1[1] < break_2[1]:
                         offset_1 = ref_seq[break_1[0]:break_2[0]]
                         offset_2 = ref_seq[break_1[1]-1:break_2[1]-1]
                         if offset_1 == offset_2:
                             self.break_count[break_1] += self.break_count[break_2]
                             self.break_count.pop(break_2, None)
-
                             repeat = True
     
     def printBreaks(self):
-        
         def checkBreakPosition(position):
             if position == 0:
                 return self.ref_seq_length
@@ -387,10 +384,9 @@ class ROTLA(object):
         with open(self.output_header + ".breakpoints.txt", "w") as OUTPUT:
             OUTPUT.write('Start\tEnd\tCount\n')
             for breakpoint in sorted(break_list, key=lambda k: (int(k[0]), int(k[1]), -int(k[2]))):
-                OUTPUT.write(str(breakpoint[0]) + '\t' + str(breakpoint[1]) + "\t" + str(breakpoint[2]) + "\n")
+                OUTPUT.write(f"{breakpoint[0]}\t{breakpoint[1]}\t{breakpoint[2]}\n")  # Using f-string
     
     def execute(self):
-        
         # Make FASTA files from DNA-seq
         self.makeFASTA(self.read_1_fn, self.output_header + ".read_1.fasta")
         self.makeFASTA(self.read_2_fn, self.output_header + ".read_2.fasta")

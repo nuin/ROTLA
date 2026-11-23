@@ -12,12 +12,13 @@ with open('HISTORY.md') as history_file:
     history = history_file.read()
 
 requirements = [
-    'Click>=6.0,<=7.1.2',
+    'Click>=7.0',
 ]
 
 setup(
     name='ROTLA',
-    version='0.1.0',
+    version='2.0.1',
+    python_requires='>=3.8',
     description="Split-read mapper for detecting mitochondrial deletions",
     long_description=readme + '\n\n' + history,
     author="Christopher Andrew Lavender, Adam Burkholder",
@@ -39,9 +40,7 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
-        "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
     ],
     data_files=[('config', ['paths.cfg'])],
 )

@@ -7,9 +7,10 @@ import copy
 import gzip
 import re
 
-from subprocess import call
+import shutil
+from subprocess import check_call
 from collections import defaultdict
-from .__init__ import PATHS
+from . import blat_path
 
 class ROTLA(object):
     
@@ -20,17 +21,15 @@ class ROTLA(object):
         self.read_2_fn = kwargs['read_2_file_name']
         self.ref_fn = kwargs['reference_sequence']
         self.output_header = kwargs['output_prefix']
-        self.blat_path = PATHS['blat']
+        self.blat_path = kwargs.get('blat') or blat_path()
         self.required_alignment_length = kwargs['length']
         
         # File checks
-        for fn in [
-            self.read_1_fn,
-            self.read_2_fn,
-            self.ref_fn,
-            self.blat_path
-        ]:
-            os.path.exists(fn)
+        for fn in [self.read_1_fn, self.read_2_fn, self.ref_fn]:
+            if not os.path.isfile(fn):
+                raise FileNotFoundError(fn)
+        if not (os.path.isfile(self.blat_path) or shutil.which(self.blat_path)):
+            raise FileNotFoundError(f"BLAT executable not found: {self.blat_path} (set ROTLA_BLAT or --blat)")
         
         self.alignment = dict()
         self.breakpoints = dict()
@@ -401,9 +400,9 @@ class ROTLA(object):
         
         # Perform alignments
         with open(self.output_header + ".read_1.blat.out", "w") as blat_out:
-            call([self.blat_path, padded_fn, self.output_header + ".read_1.fasta", self.output_header + ".read_1.psl"], stdout=blat_out)
+            check_call([self.blat_path, padded_fn, self.output_header + ".read_1.fasta", self.output_header + ".read_1.psl"], stdout=blat_out)
         with open(self.output_header + ".read_2.blat.out", "w") as blat_out:
-            call([self.blat_path, padded_fn, self.output_header + ".read_2.fasta", self.output_header + ".read_2.psl"], stdout=blat_out)
+            check_call([self.blat_path, padded_fn, self.output_header + ".read_2.fasta", self.output_header + ".read_2.psl"], stdout=blat_out)
         
         # Read alignments
         self.readAlignments(self.output_header + ".read_1.psl", self.output_header + ".read_2.psl")
@@ -423,6 +422,7 @@ if __name__ == '__main__':
     parser.add_argument('reference_sequence', type=str, help='Reference sequence in FASTA format')
     parser.add_argument('output_prefix', type=str, help='Prefix for output file name')
     parser.add_argument('--length', type=int, help='Minimum required alignment length', default=25)
+    parser.add_argument('--blat', type=str, help='BLAT executable', default=None)
     args = parser.parse_args()
 
     ROTLA(**vars(args))

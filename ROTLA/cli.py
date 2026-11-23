@@ -6,7 +6,7 @@
 import click
 import os
 
-from ROTLA import ROTLA as _find_breakpoints
+from .ROTLA import ROTLA as _find_breakpoints
 from .compile_breakpoint_results import compile_breakpoints as _compile_breakpoints
 from .aligned_bases_from_psl import get_aligned_bases as _get_aligned_bases
 
@@ -17,12 +17,14 @@ def main(args=None):
 @main.command()
 @click.option('--length', type=int, help='Minimum required alignment length, default = 25',
               default=25)
+@click.option('--blat', type=str, default=None,
+              help='BLAT executable; default $ROTLA_BLAT, then paths.cfg, then blat on PATH')
 @click.argument('read_1_fastq_file', type=str)
 @click.argument('read_2_fastq_file', type=str)
 @click.argument('reference_sequence', type=str)
 @click.argument('output_prefix', type=str)
 def find_breakpoints(read_1_fastq_file, read_2_fastq_file, reference_sequence,
-                     output_prefix, length):
+                     output_prefix, length, blat):
     '''
     Identify mitochondrial breakpoints.
 
@@ -44,7 +46,8 @@ def find_breakpoints(read_1_fastq_file, read_2_fastq_file, reference_sequence,
         'read_2_file_name': read_2_fastq_file,
         'reference_sequence': reference_sequence,
         'output_prefix': output_prefix,
-        'length': length
+        'length': length,
+        'blat': blat,
     }
     _find_breakpoints(**args)
 
